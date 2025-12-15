@@ -29,6 +29,12 @@ namespace JatetxeaApi.Repositorioak
                 .SingleOrDefault(x => x.Id == id);
         }
 
+        public Inbentarioa? Get(String izena)
+        {
+            return _session.Query<Inbentarioa>()
+                .SingleOrDefault(x => x.Izena == izena);
+        }
+
         public IList<Inbentarioa> GetAll()
         {
             return _session.Query<Inbentarioa>().ToList();

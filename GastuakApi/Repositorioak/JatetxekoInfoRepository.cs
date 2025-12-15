@@ -28,6 +28,11 @@ namespace JatetxeaApi.Repositorioak
             return _session.Query<JatetxekoInfo>().SingleOrDefault(x => x.Id == id);
         }
 
+        public JatetxekoInfo? Get(string izena)
+        {
+            return _session.Query<JatetxekoInfo>().SingleOrDefault(x => x.Izena == izena);
+        }
+
         public IList<JatetxekoInfo> GetAll()
         {
             return _session.Query<JatetxekoInfo>().ToList();

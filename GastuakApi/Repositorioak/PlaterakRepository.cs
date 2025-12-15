@@ -28,6 +28,11 @@ namespace JatetxeaApi.Repositorioak
             return _session.Query<Platerak>().SingleOrDefault(x => x.Id == id);
         }
 
+        public Platerak? Get(String izena)
+        {
+            return _session.Query<Platerak>().SingleOrDefault(x => x.Izena == izena);
+        }
+
         public IList<Platerak> GetAll()
         {
             return _session.Query<Platerak>().ToList();

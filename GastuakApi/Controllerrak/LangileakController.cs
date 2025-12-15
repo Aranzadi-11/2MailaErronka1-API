@@ -1,5 +1,5 @@
-﻿using JatetxeaApi.Modeloak;
-using JatetxeaApi.DTOak;
+﻿using JatetxeaApi.DTOak;
+using JatetxeaApi.Modeloak;
 using JatetxeaApi.Repositorioak;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -17,6 +17,7 @@ namespace JatetxeaApi.Controllerrak
             _repo = repo;
         }
 
+        // GET: api/Langileak
         [HttpGet]
         public IActionResult GetAll()
         {
@@ -34,6 +35,7 @@ namespace JatetxeaApi.Controllerrak
             return Ok(lista);
         }
 
+        // GET: api/Langileak/{id}
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
@@ -52,6 +54,33 @@ namespace JatetxeaApi.Controllerrak
             });
         }
 
+        // POST: api/Langileak/login
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest login)
+        {
+            if (login == null || string.IsNullOrEmpty(login.Erabiltzailea) || string.IsNullOrEmpty(login.Pasahitza))
+                return BadRequest(new { mezua = "Erabiltzailea eta pasahitza beharrezkoak dira." });
+
+            var l = _repo.GetAll()
+                .FirstOrDefault(x =>
+                    x.Erabiltzailea.Equals(login.Erabiltzailea, System.StringComparison.OrdinalIgnoreCase) &&
+                    x.Pasahitza.Trim() == login.Pasahitza.Trim());
+
+            if (l == null)
+                return Unauthorized(new { mezua = "Erabiltzailea edo pasahitza oker" });
+
+            return Ok(new LangileakDto
+            {
+                Id = l.Id,
+                Izena = l.Izena,
+                Erabiltzailea = l.Erabiltzailea,
+                Aktibo = l.Aktibo,
+                ErregistroData = l.ErregistroData,
+                RolaId = l.RolaId
+            });
+        }
+
+        // POST: api/Langileak
         [HttpPost]
         public IActionResult Sortu([FromBody] LangileakSortuDto dto)
         {
@@ -60,6 +89,7 @@ namespace JatetxeaApi.Controllerrak
             return Ok(new { mezua = "Langilea sortuta", id = l.Id });
         }
 
+        // PUT: api/Langileak/{id}
         [HttpPut("{id}")]
         public IActionResult Eguneratu(int id, [FromBody] LangileakSortuDto dto)
         {
@@ -77,6 +107,7 @@ namespace JatetxeaApi.Controllerrak
             return Ok(new { mezua = "Eguneratuta" });
         }
 
+        // DELETE: api/Langileak/{id}
         [HttpDelete("{id}")]
         public IActionResult Ezabatu(int id)
         {

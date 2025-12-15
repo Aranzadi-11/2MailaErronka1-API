@@ -27,6 +27,10 @@ namespace JatetxeaApi.Repositorioak
         {
             return _session.Query<Kategoria>().SingleOrDefault(x => x.Id == id);
         }
+        public Kategoria? Get(string izena)
+        {
+            return _session.Query<Kategoria>().SingleOrDefault(x => x.Izena == izena);
+        }
 
         public IList<Kategoria> GetAll()
         {

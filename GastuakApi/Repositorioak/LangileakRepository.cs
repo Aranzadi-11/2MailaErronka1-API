@@ -28,6 +28,11 @@ namespace JatetxeaApi.Repositorioak
             return _session.Query<Langileak>().SingleOrDefault(x => x.Id == id);
         }
 
+        public Langileak? Get(string izena)
+        {
+            return _session.Query<Langileak>().SingleOrDefault(x => x.Izena == izena);
+        }
+
         public IList<Langileak> GetAll()
         {
             return _session.Query<Langileak>().ToList();

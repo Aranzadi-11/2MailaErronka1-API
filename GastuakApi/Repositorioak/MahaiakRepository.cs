@@ -23,9 +23,9 @@ namespace JatetxeaApi.Repositorioak
             tx.Commit();
         }
 
-        public Mahaiak? Get(int id)
+        public Mahaiak? Get(int mahaiazbk)
         {
-            return _session.Query<Mahaiak>().SingleOrDefault(x => x.Id == id);
+            return _session.Query<Mahaiak>().SingleOrDefault(x => x.MahaiaZbk == mahaiazbk);
         }
 
         public IList<Mahaiak> GetAll()

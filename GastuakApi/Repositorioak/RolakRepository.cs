@@ -28,6 +28,12 @@ namespace JatetxeaApi.Repositorioak
             return _session.Query<Rolak>().SingleOrDefault(x => x.Id == id);
         }
 
+        public Rolak? Get(string izena)
+        {
+            return _session.Query<Rolak>().SingleOrDefault(r => r.Izena == izena);
+        }
+
+
         public IList<Rolak> GetAll()
         {
             return _session.Query<Rolak>().ToList();
