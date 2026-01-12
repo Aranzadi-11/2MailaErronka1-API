@@ -2,7 +2,7 @@
 {
     public class Kategoria
     {
-        public virtual int Id { get; set; }  // mapeamos id_kategoria
+        public virtual int Id { get; set; }  
         public virtual string Izena { get; set; }
 
         public Kategoria() { }

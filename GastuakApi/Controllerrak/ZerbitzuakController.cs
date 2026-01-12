@@ -83,5 +83,124 @@ namespace JatetxeaApi.Controllerrak
             _repo.Delete(z);
             return Ok(new { mezua = "Ezabatuta" });
         }
+
+
+        [HttpPost("egin")]
+        public IActionResult ZerbitzuaEgin([FromBody] ZerbitzuaEskariaDto dto)
+        {
+            using var session = NHibernateHelper.SessionFactory.OpenSession();
+            using var tx = session.BeginTransaction();
+
+            var erroreak = new List<ZerbitzuErroreaDto>();
+
+            try
+            {
+                if (dto.Platerak == null || !dto.Platerak.Any(p => p.Kantitatea > 0))
+                {
+                    return Ok(new ZerbitzuaEmaitzaDto
+                    {
+                        Ondo = false,
+                        ZerbitzuaId = null,
+                        Erroreak = new()
+                    });
+                }
+
+                foreach (var p in dto.Platerak.Where(x => x.Kantitatea > 0))
+                {
+                    var platera = session.Get<Platerak>(p.PlateraId);
+                    if (platera == null) continue;
+
+                    var osagaiak = session.Query<PlaterenOsagaiak>()
+                        .Where(o => o.PlateraId == p.PlateraId)
+                        .ToList();
+
+                    foreach (var o in osagaiak)
+                    {
+                        var inv = session.Get<Inbentarioa>(o.InbentarioaId);
+                        session.Lock(inv, NHibernate.LockMode.Upgrade);
+
+                        var beharrezkoa = (int)(o.Kantitatea * p.Kantitatea);
+
+                        if (inv.Kantitatea < beharrezkoa)
+                        {
+                            erroreak.Add(new ZerbitzuErroreaDto
+                            {
+                                PlateraId = platera.Id,
+                                PlateraIzena = platera.Izena
+                            });
+                            break;
+                        }
+                    }
+                }
+
+                if (erroreak.Any())
+                {
+                    tx.Rollback();
+                    return Ok(new ZerbitzuaEmaitzaDto
+                    {
+                        Ondo = false,
+                        ZerbitzuaId = null,
+                        Erroreak = erroreak
+                    });
+                }
+
+                var zerbitzua = new Zerbitzuak(dto.LangileId, dto.MahaiaId, DateTime.Now, "Itxaropean", 0);
+                session.Save(zerbitzua);
+
+                decimal guztira = 0;
+
+                foreach (var p in dto.Platerak.Where(x => x.Kantitatea > 0))
+                {
+                    var platera = session.Get<Platerak>(p.PlateraId);
+
+                    var osagaiak = session.Query<PlaterenOsagaiak>()
+                        .Where(o => o.PlateraId == p.PlateraId)
+                        .ToList();
+
+                    foreach (var o in osagaiak)
+                    {
+                        var inv = session.Get<Inbentarioa>(o.InbentarioaId);
+                        session.Lock(inv, NHibernate.LockMode.Upgrade);
+
+                        inv.Kantitatea -= (int)(o.Kantitatea * p.Kantitatea);
+                        inv.AzkenEguneratzea = DateTime.Now;
+                        session.Update(inv);
+                    }
+
+                    session.Save(new ZerbitzuXehetasunak
+                    {
+                        ZerbitzuaId = zerbitzua.Id,
+                        PlateraId = p.PlateraId,
+                        Kantitatea = p.Kantitatea,
+                        PrezioUnitarioa = platera.Prezioa
+                    });
+
+                    guztira += platera.Prezioa * p.Kantitatea;
+                }
+
+                zerbitzua.Guztira = guztira;
+                session.Update(zerbitzua);
+
+                tx.Commit();
+
+                return Ok(new ZerbitzuaEmaitzaDto
+                {
+                    Ondo = true,
+                    ZerbitzuaId = zerbitzua.Id,
+                    Erroreak = new()
+                });
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
+
+
     }
 }
+
+
+
+       

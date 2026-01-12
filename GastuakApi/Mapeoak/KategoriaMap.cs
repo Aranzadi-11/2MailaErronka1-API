@@ -10,7 +10,7 @@ namespace JatetxeaApi.Mapeoak
             Table("kategoriak");
 
             Id(x => x.Id)
-                .Column("id_kategoria")
+                .Column("id")
                 .GeneratedBy.Identity();
 
             Map(x => x.Izena)

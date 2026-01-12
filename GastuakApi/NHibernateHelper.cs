@@ -17,7 +17,7 @@ namespace JatetxeaApi
         {
             var config = Fluently.Configure()
                 .Database(MySQLConfiguration.Standard
-                    .ConnectionString("Server=192.168.115.153;Port=3306;Database=jatetxea;Uid=admin;Pwd=abc123ABC@;"))
+                    .ConnectionString("Server=localhost;Port=3306;Database=jatetxea;Uid=root;Pwd=abc123ABC;"))
                 .Mappings(m =>
                 {
                     m.FluentMappings.AddFromAssemblyOf<InbentarioaMap>();
