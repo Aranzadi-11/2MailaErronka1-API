@@ -28,6 +28,11 @@ namespace JatetxeaApi.Mapeoak
             Map(x => x.PrezioUnitarioa)
                 .Column("prezio_unitarioa")
                 .Not.Nullable();
+
+            Map(x => x.Zerbitzatuta)
+                .Column("zerbitzatuta")
+                .Not.Nullable();
+
         }
     }
 }

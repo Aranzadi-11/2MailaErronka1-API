@@ -21,6 +21,10 @@ namespace JatetxeaApi.Mapeoak
                 .Column("mahaia_id")
                 .Not.Nullable();
 
+            Map(x => x.ErreserbaId)
+                .Column("erreserba_id")
+                .Not.Nullable();
+
             Map(x => x.EskaeraData)
                 .Column("eskaera_data")
                 .Nullable();

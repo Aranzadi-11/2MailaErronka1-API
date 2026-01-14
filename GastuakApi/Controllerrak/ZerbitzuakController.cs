@@ -25,6 +25,7 @@ namespace JatetxeaApi.Controllerrak
                 Id = z.Id,
                 LangileId = z.LangileId,
                 MahaiaId = z.MahaiaId,
+                ErreserbaId = z.ErreserbaId,
                 EskaeraData = z.EskaeraData,
                 Egoera = z.Egoera,
                 Guztira = z.Guztira
@@ -44,6 +45,7 @@ namespace JatetxeaApi.Controllerrak
                 Id = z.Id,
                 LangileId = z.LangileId,
                 MahaiaId = z.MahaiaId,
+                ErreserbaId = z.ErreserbaId,
                 EskaeraData = z.EskaeraData,
                 Egoera = z.Egoera,
                 Guztira = z.Guztira
@@ -53,7 +55,7 @@ namespace JatetxeaApi.Controllerrak
         [HttpPost]
         public IActionResult Sortu([FromBody] ZerbitzuakSortuDto dto)
         {
-            var z = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.EskaeraData, dto.Egoera, dto.Guztira);
+            var z = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId,DateTime.Now, dto.Egoera, dto.Guztira);
             _repo.Add(z);
             return Ok(new { mezua = "Zerbitzuak sortuta", id = z.Id });
         }
@@ -69,6 +71,7 @@ namespace JatetxeaApi.Controllerrak
             z.EskaeraData = dto.EskaeraData;
             z.Egoera = dto.Egoera;
             z.Guztira = dto.Guztira;
+            z.ErreserbaId = dto.ErreserbaId;
 
             _repo.Update(z);
             return Ok(new { mezua = "Eguneratuta" });
@@ -83,7 +86,6 @@ namespace JatetxeaApi.Controllerrak
             _repo.Delete(z);
             return Ok(new { mezua = "Ezabatuta" });
         }
-
 
         [HttpPost("egin")]
         public IActionResult ZerbitzuaEgin([FromBody] ZerbitzuaEskariaDto dto)
@@ -144,7 +146,7 @@ namespace JatetxeaApi.Controllerrak
                     });
                 }
 
-                var zerbitzua = new Zerbitzuak(dto.LangileId, dto.MahaiaId, DateTime.Now, "Itxaropean", 0);
+                var zerbitzua = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId ,DateTime.Now, "Itxaropean", 0);
                 session.Save(zerbitzua);
 
                 decimal guztira = 0;
@@ -197,10 +199,23 @@ namespace JatetxeaApi.Controllerrak
             }
         }
 
+        [HttpGet("erreserba/{erreserbaId}/platerak")]
+        public IActionResult GetPlaterakByErreserba(int erreserbaId)
+        {
+            var zerbitzua = _repo.GetAll().FirstOrDefault(z => z.ErreserbaId == erreserbaId);
+            if (zerbitzua == null) return NotFound(new { mezua = "Ez dago zerbitzurik erreserba honekin" });
+
+            using var session = NHibernateHelper.SessionFactory.OpenSession();
+            var xehetasunak = session.Query<ZerbitzuXehetasunak>()
+                .Where(x => x.ZerbitzuaId == zerbitzua.Id)
+                .Select(x => new {
+                    x.PlateraId,
+                    x.Kantitatea
+                })
+                .ToList();
+
+            return Ok(xehetasunak);
+        }
 
     }
 }
-
-
-
-       
