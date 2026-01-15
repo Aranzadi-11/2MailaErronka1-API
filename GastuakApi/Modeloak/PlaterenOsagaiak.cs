@@ -8,6 +8,12 @@
 
         public PlaterenOsagaiak() { }
 
+        public PlaterenOsagaiak(int platareaId, decimal kantitatea) 
+        {
+            PlateraId = platareaId;
+            Kantitatea = kantitatea;
+        }
+
         public PlaterenOsagaiak(int platareaId, int inbentarioaId, decimal kantitatea)
         {
             PlateraId = platareaId;

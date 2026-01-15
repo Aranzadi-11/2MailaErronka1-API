@@ -2,6 +2,7 @@
 using JatetxeaApi.DTOak;
 using JatetxeaApi.Repositorioak;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 
 namespace JatetxeaApi.Controllerrak
@@ -55,7 +56,7 @@ namespace JatetxeaApi.Controllerrak
         [HttpPost]
         public IActionResult Sortu([FromBody] ZerbitzuakSortuDto dto)
         {
-            var z = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId,DateTime.Now, dto.Egoera, dto.Guztira);
+            var z = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId, DateTime.Now, dto.Egoera, dto.Guztira);
             _repo.Add(z);
             return Ok(new { mezua = "Zerbitzuak sortuta", id = z.Id });
         }
@@ -93,96 +94,116 @@ namespace JatetxeaApi.Controllerrak
             using var session = NHibernateHelper.SessionFactory.OpenSession();
             using var tx = session.BeginTransaction();
 
-            var erroreak = new List<ZerbitzuErroreaDto>();
-
             try
             {
-                if (dto.Platerak == null || !dto.Platerak.Any(p => p.Kantitatea > 0))
+                var zerbitzua = session.Query<Zerbitzuak>()
+                    .FirstOrDefault(z => z.ErreserbaId == dto.ErreserbaId);
+
+                if (zerbitzua == null)
                 {
-                    return Ok(new ZerbitzuaEmaitzaDto
-                    {
-                        Ondo = false,
-                        ZerbitzuaId = null,
-                        Erroreak = new()
-                    });
+                    zerbitzua = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId, DateTime.Now, "Itxaropean", 0);
+                    session.Save(zerbitzua);
                 }
 
-                foreach (var p in dto.Platerak.Where(x => x.Kantitatea > 0))
+                var xehetasunak = session.Query<ZerbitzuXehetasunak>()
+                    .Where(x => x.ZerbitzuaId == zerbitzua.Id)
+                    .ToList();
+
+                foreach (var p in dto.Platerak)
                 {
-                    var platera = session.Get<Platerak>(p.PlateraId);
-                    if (platera == null) continue;
+                    var zaharra = xehetasunak.FirstOrDefault(x => x.PlateraId == p.PlateraId);
+                    var berriaKant = p.Kantitatea;
 
-                    var osagaiak = session.Query<PlaterenOsagaiak>()
-                        .Where(o => o.PlateraId == p.PlateraId)
-                        .ToList();
-
-                    foreach (var o in osagaiak)
+                    if (zaharra == null && berriaKant > 0)
                     {
-                        var inv = session.Get<Inbentarioa>(o.InbentarioaId);
-                        session.Lock(inv, NHibernate.LockMode.Upgrade);
+                        var platera = session.Get<Platerak>(p.PlateraId);
+                        var osagaiak = session.Query<PlaterenOsagaiak>()
+                            .Where(o => o.PlateraId == p.PlateraId)
+                            .ToList();
 
-                        var beharrezkoa = (int)(o.Kantitatea * p.Kantitatea);
-
-                        if (inv.Kantitatea < beharrezkoa)
+                        foreach (var o in osagaiak)
                         {
-                            erroreak.Add(new ZerbitzuErroreaDto
+                            var inv = session.Get<Inbentarioa>(o.InbentarioaId);
+                            session.Lock(inv, NHibernate.LockMode.Upgrade);
+                            inv.Kantitatea -= (int)(o.Kantitatea * berriaKant);
+                            inv.AzkenEguneratzea = DateTime.Now;
+                            session.Update(inv);
+                        }
+
+                        session.Save(new ZerbitzuXehetasunak
+                        {
+                            ZerbitzuaId = zerbitzua.Id,
+                            PlateraId = p.PlateraId,
+                            Kantitatea = berriaKant,
+                            PrezioUnitarioa = platera.Prezioa,
+                            Zerbitzatuta = false
+                        });
+
+                        continue;
+                    }
+
+                    if (zaharra != null)
+                    {
+                        if (zaharra.Zerbitzatuta && berriaKant < zaharra.Kantitatea)
+                            berriaKant = zaharra.Kantitatea;
+
+                        var diferentzia = berriaKant - zaharra.Kantitatea;
+
+                        if (diferentzia > 0)
+                        {
+                            var osagaiak = session.Query<PlaterenOsagaiak>()
+                                .Where(o => o.PlateraId == p.PlateraId)
+                                .ToList();
+
+                            foreach (var o in osagaiak)
                             {
-                                PlateraId = platera.Id,
-                                PlateraIzena = platera.Izena
-                            });
-                            break;
+                                var inv = session.Get<Inbentarioa>(o.InbentarioaId);
+                                session.Lock(inv, NHibernate.LockMode.Upgrade);
+                                inv.Kantitatea -= (int)(o.Kantitatea * diferentzia);
+                                inv.AzkenEguneratzea = DateTime.Now;
+                                session.Update(inv);
+                            }
+
+                            zaharra.Kantitatea = berriaKant;
+                            session.Update(zaharra);
+                        }
+                        else if (diferentzia < 0 && !zaharra.Zerbitzatuta)
+                        {
+                            var osagaiak = session.Query<PlaterenOsagaiak>()
+                                .Where(o => o.PlateraId == p.PlateraId)
+                                .ToList();
+
+                            foreach (var o in osagaiak)
+                            {
+                                var inv = session.Get<Inbentarioa>(o.InbentarioaId);
+                                session.Lock(inv, NHibernate.LockMode.Upgrade);
+                                inv.Kantitatea += (int)(o.Kantitatea * -diferentzia);
+                                inv.AzkenEguneratzea = DateTime.Now;
+                                session.Update(inv);
+                            }
+
+                            zaharra.Kantitatea = berriaKant;
+                            session.Update(zaharra);
+                        }
+
+                        if (zaharra.Kantitatea == 0 && !zaharra.Zerbitzatuta)
+                        {
+                            session.Delete(zaharra);
                         }
                     }
                 }
 
-                if (erroreak.Any())
-                {
-                    tx.Rollback();
-                    return Ok(new ZerbitzuaEmaitzaDto
-                    {
-                        Ondo = false,
-                        ZerbitzuaId = null,
-                        Erroreak = erroreak
-                    });
-                }
+                var xeheList = session.Query<ZerbitzuXehetasunak>()
+                    .Where(x => x.ZerbitzuaId == zerbitzua.Id)
+                    .ToList();
 
-                var zerbitzua = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId ,DateTime.Now, "Itxaropean", 0);
-                session.Save(zerbitzua);
+                zerbitzua.Guztira = xeheList.Any()
+                    ? xeheList.Sum(x => x.PrezioUnitarioa * x.Kantitatea)
+                    : 0;
 
-                decimal guztira = 0;
 
-                foreach (var p in dto.Platerak.Where(x => x.Kantitatea > 0))
-                {
-                    var platera = session.Get<Platerak>(p.PlateraId);
 
-                    var osagaiak = session.Query<PlaterenOsagaiak>()
-                        .Where(o => o.PlateraId == p.PlateraId)
-                        .ToList();
-
-                    foreach (var o in osagaiak)
-                    {
-                        var inv = session.Get<Inbentarioa>(o.InbentarioaId);
-                        session.Lock(inv, NHibernate.LockMode.Upgrade);
-
-                        inv.Kantitatea -= (int)(o.Kantitatea * p.Kantitatea);
-                        inv.AzkenEguneratzea = DateTime.Now;
-                        session.Update(inv);
-                    }
-
-                    session.Save(new ZerbitzuXehetasunak
-                    {
-                        ZerbitzuaId = zerbitzua.Id,
-                        PlateraId = p.PlateraId,
-                        Kantitatea = p.Kantitatea,
-                        PrezioUnitarioa = platera.Prezioa
-                    });
-
-                    guztira += platera.Prezioa * p.Kantitatea;
-                }
-
-                zerbitzua.Guztira = guztira;
                 session.Update(zerbitzua);
-
                 tx.Commit();
 
                 return Ok(new ZerbitzuaEmaitzaDto
@@ -208,14 +229,15 @@ namespace JatetxeaApi.Controllerrak
             using var session = NHibernateHelper.SessionFactory.OpenSession();
             var xehetasunak = session.Query<ZerbitzuXehetasunak>()
                 .Where(x => x.ZerbitzuaId == zerbitzua.Id)
-                .Select(x => new {
+                .Select(x => new
+                {
                     x.PlateraId,
-                    x.Kantitatea
+                    x.Kantitatea,
+                    x.Zerbitzatuta
                 })
                 .ToList();
 
             return Ok(xehetasunak);
         }
-
     }
 }
