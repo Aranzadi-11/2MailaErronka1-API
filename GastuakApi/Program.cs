@@ -159,6 +159,8 @@ builder.Services.AddTransient<RolakRepository>();
 builder.Services.AddTransient<MahaiakRepository>();
 builder.Services.AddTransient<ErreserbakRepository>();
 builder.Services.AddTransient<JatetxekoInfoRepository>();
+builder.Services.AddHostedService<JatetxeaApi.BackService.KaxaTotalaKalkulatu>();
+
 
 var app = builder.Build();
 

@@ -7,7 +7,7 @@ namespace JatetxeaApi.DTOak
         public int Id { get; set; }
         public int LangileId { get; set; }
         public int MahaiaId { get; set; }
-        public int ErreserbaId { get; set; }
+        public int? ErreserbaId { get; set; }
         public DateTime? EskaeraData { get; set; }
         public string Egoera { get; set; }
         public decimal? Guztira { get; set; }
@@ -17,7 +17,7 @@ namespace JatetxeaApi.DTOak
     {
         public int LangileId { get; set; }
         public int MahaiaId { get; set; }
-        public int ErreserbaId { get; set; }
+        public int? ErreserbaId { get; set; }
         public DateTime? EskaeraData { get; set; }
         public string Egoera { get; set; } = "Itxaropean";
         public decimal? Guztira { get; set; }

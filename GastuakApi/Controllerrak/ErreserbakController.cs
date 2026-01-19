@@ -11,10 +11,12 @@ namespace JatetxeaApi.Controllerrak
     public class ErreserbakController : ControllerBase
     {
         private readonly ErreserbakRepository _repo;
+        private readonly ZerbitzuakRepository _zerbitzuRepo;
 
-        public ErreserbakController(ErreserbakRepository repo)
+        public ErreserbakController(ErreserbakRepository repo, ZerbitzuakRepository zerbitzuRepo)
         {
             _repo = repo;
+            _zerbitzuRepo = zerbitzuRepo;
         }
 
         [HttpGet]
@@ -85,6 +87,16 @@ namespace JatetxeaApi.Controllerrak
         {
             var e = _repo.Get(id);
             if (e == null) return NotFound(new { mezua = "Ez da aurkitu" });
+
+            var lotutakoZerbitzuak = _zerbitzuRepo.GetAll()
+                .Where(z => z.ErreserbaId.HasValue && z.ErreserbaId.Value == id)
+                .ToList();
+
+            foreach (var z in lotutakoZerbitzuak)
+            {
+                z.ErreserbaId = null;
+                _zerbitzuRepo.Update(z);
+            }
 
             _repo.Delete(e);
             return Ok(new { mezua = "Ezabatuta" });
