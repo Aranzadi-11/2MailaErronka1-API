@@ -11,12 +11,13 @@
 
         public ZerbitzuXehetasunak() { }
 
-        public ZerbitzuXehetasunak(int zerbitzuaId, int plateraId, int kantitatea, decimal prezioUnitarioa)
+        public ZerbitzuXehetasunak(int zerbitzuaId, int plateraId, int kantitatea, decimal prezioUnitarioa, bool zerbitzatuta)
         {
             ZerbitzuaId = zerbitzuaId;
             PlateraId = plateraId;
             Kantitatea = kantitatea;
             PrezioUnitarioa = prezioUnitarioa;
+            Zerbitzatuta = zerbitzatuta;
         }
     }
 }

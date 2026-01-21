@@ -101,7 +101,7 @@ namespace JatetxeaApi.Controllerrak
 
                 if (zerbitzua == null)
                 {
-                    zerbitzua = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId, DateTime.Now, "Itxaropean", 0);
+                    zerbitzua = new Zerbitzuak(dto.LangileId, dto.MahaiaId, dto.ErreserbaId, DateTime.Now, "Eskatuta", 0);
                     session.Save(zerbitzua);
                 }
 

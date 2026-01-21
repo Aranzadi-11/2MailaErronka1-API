@@ -27,7 +27,8 @@ namespace JatetxeaApi.Controllerrak
                 ZerbitzuaId = e.ZerbitzuaId,
                 PlateraId = e.PlateraId,
                 Kantitatea = e.Kantitatea,
-                PrezioUnitarioa = e.PrezioUnitarioa
+                PrezioUnitarioa = e.PrezioUnitarioa,
+                Zerbitzatuta = e.Zerbitzatuta
             });
 
             return Ok(dtoLista);
@@ -41,7 +42,8 @@ namespace JatetxeaApi.Controllerrak
                 ZerbitzuaId = dto.ZerbitzuaId,
                 PlateraId = dto.PlateraId,
                 Kantitatea = dto.Kantitatea,
-                PrezioUnitarioa = dto.PrezioUnitarioa
+                PrezioUnitarioa = dto.PrezioUnitarioa,
+                Zerbitzatuta = dto.Zerbitzatuta
             };
 
             _repo.Add(elementua);
@@ -66,7 +68,8 @@ namespace JatetxeaApi.Controllerrak
                 ZerbitzuaId = e.ZerbitzuaId,
                 PlateraId = e.PlateraId,
                 Kantitatea = e.Kantitatea,
-                PrezioUnitarioa = e.PrezioUnitarioa
+                PrezioUnitarioa = e.PrezioUnitarioa,
+                Zerbitzatuta = e.Zerbitzatuta
             };
 
             return Ok(dto);
@@ -83,6 +86,7 @@ namespace JatetxeaApi.Controllerrak
             e.PlateraId = dto.PlateraId;
             e.Kantitatea = dto.Kantitatea;
             e.PrezioUnitarioa = dto.PrezioUnitarioa;
+            e.Zerbitzatuta = dto.Zerbitzatuta;
 
             _repo.Update(e);
 
