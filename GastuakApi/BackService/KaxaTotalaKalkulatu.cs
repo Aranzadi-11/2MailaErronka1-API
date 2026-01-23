@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+
+//Jatetxeko kaxa totalaren kalkulua egiten duen background service-a.
 namespace JatetxeaApi.BackService
 {
     public class KaxaTotalaKalkulatu : BackgroundService
@@ -23,7 +25,7 @@ namespace JatetxeaApi.BackService
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromHours(12), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 await KaxaEguneratu();
             }
         }
@@ -36,7 +38,7 @@ namespace JatetxeaApi.BackService
             try
             {
                 var zerbitzuak = session.Query<Zerbitzuak>()
-                    .Where(z => z.Guztira != null)
+                    .Where(z => z.Guztira != null && z.Egoera == "Ordainduta")
                     .Select(z => z.Guztira)
                     .ToList();
 
